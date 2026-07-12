@@ -1,0 +1,69 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        run: |
+          find scripts -name '*.sh' -print0 | xargs -0 shellcheck --severity=warning
+      - name: Validate Bash syntax
+        run: |
+          find scripts -name '*.sh' -print0 | xargs -0 -I {} bash -n {}
+
+  yaml:
+    name: YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Lint YAML
+        run: yamllint prometheus grafana alertmanager .github
+
+  json:
+    name: Dashboard JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate dashboard JSON
+        run: |
+          python3 -c "import json,sys; json.load(open('grafana/dashboards/climate.json')); print('dashboard JSON OK')"
+
+  promql:
+    name: PromQL rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate alert rules with promtool
+        run: |
+          # prom/prometheus' entrypoint is /bin/prometheus, so promtool must be
+          # selected explicitly — otherwise it is parsed as a prometheus arg.
+          docker run --rm -v "$PWD/prometheus/alerts:/rules:ro" \
+            --entrypoint /bin/promtool prom/prometheus:latest \
+            check rules /rules/climate-alerts.yml
+
+  alertmanager:
+    name: Alertmanager config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Alertmanager config + e-mail template with amtool
+        run: |
+          # Repoint the template path at the mounted dir so amtool loads and
+          # parses the .tmpl too (catches Go-template errors, not just YAML).
+          sed 's#/etc/alertmanager/templates#/work/templates#' \
+            alertmanager/alertmanager.example.yml > am-ci.yml
+          docker run --rm \
+            -v "$PWD/am-ci.yml:/work/am.yml:ro" \
+            -v "$PWD/alertmanager/templates:/work/templates:ro" \
+            --entrypoint /bin/amtool prom/alertmanager:latest \
+            check-config /work/am.yml

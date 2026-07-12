@@ -1,0 +1,13 @@
+[Unit]
+Description=Timer: read AC cold-air USB temperature sensor (every 60 seconds)
+Documentation=https://github.com/fidpa/grafana-climate-monitoring
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Persistent=true
+Unit=climate-usb-sensor.service
+
+[Install]
+WantedBy=timers.target

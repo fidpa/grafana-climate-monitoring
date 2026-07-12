@@ -1,0 +1,22 @@
+[Unit]
+Description=Climate: fetch outdoor temperature (Open-Meteo) into the textfile collector
+Documentation=https://github.com/fidpa/grafana-climate-monitoring
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+# No privileges needed beyond write access to the textfile collector dir.
+# Adjust User/Group to whatever owns that directory on your host.
+User=root
+Group=root
+ExecStart=/usr/local/sbin/fetch-outdoor-temp.sh
+# Set your own location (defaults to Berlin city centre):
+# Environment=LATITUDE=52.52
+# Environment=LONGITUDE=13.405
+# Environment=TEXTFILE_DIR=/var/lib/node_exporter/textfile_collector
+TimeoutStartSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=climate-outdoor-temp

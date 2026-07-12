@@ -1,0 +1,55 @@
+# ---------------------------------------------------------------------------
+# grafana-climate-monitoring
+# ---------------------------------------------------------------------------
+
+# Secrets & local config (never commit)
+.env
+.env.*
+!.env.example
+*.env
+!*.example.env
+*.secret
+secrets/
+config.local
+
+# Runtime output — node_exporter textfile metrics this project writes
+# (normally under /var/lib/node_exporter, but guard against local test runs)
+*.prom
+*.prom.tmp.*
+
+# Local test stack (Grafana/Prometheus spun up for a quick check)
+/data/
+*.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+
+# OS cruft
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temp / build
+*.tmp
+*.bak
+*.log
+
+# Personal / AI-assistant / marketing content (never publish)
+.claude/
+CLAUDE.md
+AGENTS.md
+TODO.md
+NOTES.md
+*_POST.md
+
+# Nextcloud / rclone symlink placeholders
+*.rclonelink

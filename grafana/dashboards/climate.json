@@ -1,0 +1,156 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["climate", "environment"],
+  "title": "Server Room Climate",
+  "uid": "climate",
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "label": "node_exporter host",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(node_hwmon_temp_celsius, instance)",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1,
+        "current": {}
+      },
+      {
+        "name": "room_sensor",
+        "label": "room hwmon selector",
+        "description": "Label matcher selecting your room-air hwmon sensor. Find yours: see docs/HARDWARE.md.",
+        "type": "textbox",
+        "query": "chip=\"YOUR_CHIP\",sensor=\"YOUR_SENSOR\"",
+        "current": { "text": "chip=\"YOUR_CHIP\",sensor=\"YOUR_SENSOR\"", "value": "chip=\"YOUR_CHIP\",sensor=\"YOUR_SENSOR\"" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 20, "type": "row", "title": "Now — overview",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "collapsed": false, "panels": []
+    },
+    {
+      "id": 1, "type": "stat", "title": "Room air now",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 1 },
+      "targets": [ { "refId": "A", "expr": "node_hwmon_temp_celsius{${room_sensor:raw},instance=~\"$instance\"}", "legendFormat": "Room" } ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "textMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "celsius", "noValue": "set room_sensor", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 28 }, { "color": "red", "value": 30 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Room alarm (RoomTempHigh)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 1 },
+      "targets": [ { "refId": "A", "expr": "count(ALERTS{alertname=\"RoomTempHigh\",alertstate=\"firing\"}) or vector(0)", "legendFormat": "Alarm" } ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "textMode": "value" },
+      "fieldConfig": { "defaults": { "mappings": [ { "type": "value", "options": { "0": { "text": "OK", "color": "green" } } }, { "type": "range", "options": { "from": 1, "to": 1000, "result": { "text": "ALARM", "color": "red" } } } ], "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 8, "type": "stat", "title": "Cooling-failure alarm (IntakeTempHigh)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 1 },
+      "targets": [ { "refId": "A", "expr": "count(ALERTS{alertname=\"IntakeTempHigh\",alertstate=\"firing\"}) or vector(0)", "legendFormat": "Alarm" } ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "textMode": "value" },
+      "fieldConfig": { "defaults": { "mappings": [ { "type": "value", "options": { "0": { "text": "OK", "color": "green" } } }, { "type": "range", "options": { "from": 1, "to": 1000, "result": { "text": "ALARM", "color": "red" } } } ], "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 21, "type": "row", "title": "History — room vs outdoor",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }, "collapsed": false, "panels": []
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "Room air vs outdoor temperature",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "targets": [
+        { "refId": "A", "expr": "node_hwmon_temp_celsius{${room_sensor:raw},instance=~\"$instance\"}", "legendFormat": "Room" },
+        { "refId": "B", "expr": "climate_outdoor_temp_celsius", "legendFormat": "Outdoor" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "celsius", "custom": { "thresholdsStyle": { "mode": "line" } }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 30 } ] } }, "overrides": [ { "matcher": { "id": "byName", "options": "Outdoor" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } } ] } ] }
+    },
+    {
+      "id": 22, "type": "row", "title": "Outdoor — now & 7-day forecast",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }, "collapsed": false, "panels": []
+    },
+    {
+      "id": 13, "type": "table", "title": "Daily maximum forecast (7–8 days, Open-Meteo)",
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "url": "https://api.open-meteo.com/v1/dwd-icon?latitude=52.52&longitude=13.405&daily=temperature_2m_max&forecast_days=8&timezone=auto",
+          "url_options": { "method": "GET" },
+          "root_selector": "( $wd := [\"Sat\", \"Sun\", \"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\"]; $rows := $map(daily.time, function($t, $i) {( $y0 := $number($substring($t, 0, 4)); $m0 := $number($substring($t, 5, 2)); $d := $number($substring($t, 8, 2)); $m := $m0 < 3 ? $m0 + 12 : $m0; $y := $m0 < 3 ? $y0 - 1 : $y0; $K := $y % 100; $J := $floor($y / 100); $h := ($d + $floor(13 * ($m + 1) / 5) + $K + $floor($K / 4) + $floor($J / 4) + 5 * $J) % 7; { \"Date\": $wd[$h] & \", \" & $t, \"Max\": daily.temperature_2m_max[$i] } )}); $rows[Max != null] )",
+          "columns": [
+            { "selector": "Date", "text": "Date", "type": "string" },
+            { "selector": "Max", "text": "Max °C", "type": "number" }
+          ],
+          "filters": [],
+          "parser": "backend"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "celsius" }, "overrides": [
+        { "matcher": { "id": "byName", "options": "Date" }, "properties": [ { "id": "custom.align", "value": "right" } ] },
+        { "matcher": { "id": "byName", "options": "Max °C" }, "properties": [
+          { "id": "custom.align", "value": "left" },
+          { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "basic" } },
+          { "id": "thresholds", "value": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 30 }, { "color": "red", "value": 35 } ] } }
+        ] }
+      ] }
+    },
+    {
+      "id": 12, "type": "stat", "title": "Outdoor now (Open-Meteo)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "targets": [ { "refId": "A", "expr": "climate_outdoor_temp_celsius", "legendFormat": "Outdoor" } ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "textMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "celsius", "noValue": "no fetch", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] }
+    },
+    {
+      "id": 11, "type": "row", "title": "Cooling intake (AC cold-air stream)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 }, "collapsed": false, "panels": []
+    },
+    {
+      "id": 5, "type": "stat", "title": "Intake now",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 24 },
+      "targets": [ { "refId": "A", "expr": "climate_intake_temp_celsius", "legendFormat": "Intake" } ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "textMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "celsius", "noValue": "no sensor", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 22 }, { "color": "red", "value": 25 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Intake history — threshold 25 °C",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 24 },
+      "targets": [ { "refId": "A", "expr": "climate_intake_temp_celsius", "legendFormat": "Intake" } ],
+      "fieldConfig": { "defaults": { "unit": "celsius", "noValue": "no sensor", "custom": { "thresholdsStyle": { "mode": "line" } }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 25 } ] } }, "overrides": [] }
+    },
+    {
+      "id": 10, "type": "row", "title": "Component temperatures (optional — correlation room ↔ component)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 }, "collapsed": true,
+      "panels": [
+        {
+          "id": 4, "type": "timeseries", "title": "Component temperatures (CPU Tctl / NVMe)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 31 },
+          "targets": [
+            { "refId": "A", "expr": "node_hwmon_temp_celsius{instance=~\"$instance\"} and on(instance,chip,sensor) node_hwmon_sensor_label{instance=~\"$instance\",label=\"Tctl\"}", "legendFormat": "CPU Tctl" },
+            { "refId": "B", "expr": "label_replace(node_hwmon_temp_celsius{instance=~\"$instance\"} and on(instance,chip,sensor) node_hwmon_sensor_label{instance=~\"$instance\",label=\"Composite\"}, \"disk\", \"$1\", \"chip\", \"nvme_(.+)\")", "legendFormat": "NVMe {{disk}}" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "celsius" }, "overrides": [] }
+        }
+      ]
+    }
+  ]
+}

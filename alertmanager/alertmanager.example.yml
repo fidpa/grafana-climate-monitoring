@@ -1,0 +1,51 @@
+# Alertmanager configuration — EXAMPLE.
+#
+# This is optional. The alert rules in prometheus/alerts/ fire without it; this
+# file only turns a firing alert into a layperson-friendly e-mail. Copy it to
+# your Alertmanager (e.g. /etc/alertmanager/alertmanager.yml), fill in the SMTP
+# settings and recipients, and deploy the template alongside it. Validate with:
+#
+#   amtool check-config /etc/alertmanager/alertmanager.yml
+#
+# The .tmpl file must be deployed BEFORE this config — amtool parses it too.
+#
+# Placeholders use example.com / RFC 5737 addresses. Replace them with yours.
+
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alerts@example.com'
+  smtp_auth_username: 'alerts@example.com'
+  # Never commit the password. Point at a root-only file (mode 0600) that your
+  # deploy step writes, e.g. `printf '%s' "$SMTP_PASSWORD" > /etc/alertmanager/smtp_password`.
+  smtp_auth_password_file: '/etc/alertmanager/smtp_password'
+  smtp_require_tls: true
+
+# Layperson-friendly e-mail templates (subject + HTML/text body).
+# Deploy templates/climate-email.tmpl to this path first.
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+route:
+  receiver: climate-mail
+  group_by: ['alertname', 'instance']
+  group_wait: 30s
+  group_interval: 5m
+  # One reminder every 6 hours while an alert stays active — not a flood.
+  repeat_interval: 6h
+
+receivers:
+  - name: climate-mail
+    email_configs:
+      - to: 'oncall@example.com'
+        send_resolved: true
+        headers:
+          Subject: '{{ template "climate.email.subject" . }}'
+        html: '{{ template "climate.email.html" . }}'
+        text: '{{ template "climate.email.text" . }}'
+
+inhibit_rules:
+  # A critical alert silences an equivalent warning for the same instance.
+  - source_matchers: ['severity = critical']
+    target_matchers: ['severity = warning']
+    equal: ['alertname', 'instance']

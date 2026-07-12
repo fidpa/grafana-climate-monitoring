@@ -1,0 +1,24 @@
+[Unit]
+Description=Climate: read AC cold-air USB temperature sensor into the textfile collector
+Documentation=https://github.com/fidpa/grafana-climate-monitoring
+# No network ordering: this reader does pure local serial I/O. Delaying it on
+# network-online.target would slow down the fast cooling-failure signal for no
+# reason. (The outdoor reader, which makes an HTTP call, does order on it.)
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+# Root: the serial device (root:dialout) and the textfile collector dir are
+# root-owned. If you run node_exporter as a dedicated user, add its group to
+# the sensor device instead and drop privileges here.
+User=root
+Group=root
+ExecStart=/usr/local/sbin/read-usb-temp-sensor.sh
+# Uncomment/adjust to override defaults without editing the script:
+# Environment=SENSOR_DEV_GLOB=/dev/serial/by-id/*CP2102N*-if00-port0
+# Environment=SENSOR_BAUD=9600
+# Environment=TEXTFILE_DIR=/var/lib/node_exporter/textfile_collector
+TimeoutStartSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=climate-usb-sensor

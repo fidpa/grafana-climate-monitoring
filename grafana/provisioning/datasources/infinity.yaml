@@ -1,0 +1,19 @@
+# Infinity datasource — queries external REST APIs directly, without going
+# through Prometheus. Used for the Open-Meteo forecast table on the dashboard:
+# Prometheus time series can only hold observed (past) values, never a forecast.
+#
+# Requires the plugin "yesoreyeram-infinity-datasource". Install it with:
+#   grafana-cli plugins install yesoreyeram-infinity-datasource
+# then restart Grafana. (Datasource provisioning is only re-read on restart,
+# unlike dashboards, which reload on a timer.)
+#
+# Deploy to: /etc/grafana/provisioning/datasources/infinity.yaml
+apiVersion: 1
+datasources:
+  - name: Infinity
+    uid: infinity
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    isDefault: false
+    editable: false
+    jsonData: {}

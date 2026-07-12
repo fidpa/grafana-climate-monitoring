@@ -1,0 +1,19 @@
+# Prometheus datasource with a FIXED uid.
+#
+# The dashboard (grafana/dashboards/climate.json) references its datasource by
+# uid "prometheus". Grafana assigns a random uid to a datasource unless you pin
+# one here — the single most common cause of a provisioned dashboard showing
+# "No data". Pinning the uid makes the reference match, with zero manual steps.
+#
+# Deploy to: /etc/grafana/provisioning/datasources/prometheus.yaml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST

@@ -1,0 +1,19 @@
+# Dashboard provider — loads every *.json from a directory on a 30 s timer.
+#
+# Copy grafana/dashboards/climate.json into the path below, then this provider
+# picks it up automatically (no restart needed for dashboard changes).
+#
+# Deploy to: /etc/grafana/provisioning/dashboards/climate.yaml
+apiVersion: 1
+providers:
+  - name: Climate
+    orgId: 1
+    folder: Climate
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

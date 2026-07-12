@@ -1,0 +1,93 @@
+# Server-room climate alert rules.
+#
+# Load into Prometheus via rule_files: in prometheus.yml, e.g.
+#   rule_files:
+#     - /etc/prometheus/rules/climate-alerts.yml
+#
+# Adjust every threshold to your room: the values below are illustrative
+# starting points, not universal truths. Log a few days of normal operation,
+# then set thresholds a few degrees above your observed baseline.
+#
+# Metric sources:
+#   node_hwmon_temp_celsius   node_exporter (on-board hwmon sensor) — room air
+#   climate_intake_*          scripts/read-usb-temp-sensor.sh       — AC cold-air stream
+#   climate_outdoor_*         scripts/fetch-outdoor-temp.sh         — reference
+groups:
+  - name: climate
+    rules:
+      # Room air is over the limit. Broad but slow: the room average lags a
+      # cooling failure by many minutes. Replace the label matcher with your own
+      # hwmon chip/sensor (see docs/HARDWARE.md for how to find it).
+      - alert: RoomTempHigh
+        expr: node_hwmon_temp_celsius{chip="YOUR_CHIP",sensor="YOUR_SENSOR"} > 30
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Server room too warm"
+          value: "{{ $value | printf \"%.1f\" }}°C"
+          threshold: "30°C"
+          description: >-
+            Room air has been above the limit for over 10 minutes.
+            Check the server room and the air conditioning.
+
+      # AC cold-air stream is warming — the direct, fast cooling-failure signal.
+      # This probe reacts within seconds, while RoomTempHigh only follows slowly
+      # via the room average. Keep this threshold tight (a few degrees above the
+      # normal supply-air temperature).
+      - alert: IntakeTempHigh
+        expr: climate_intake_temp_celsius > 25
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cooling failure — AC cold-air stream warming"
+          value: "{{ $value | printf \"%.1f\" }}°C"
+          threshold: "25°C"
+          description: >-
+            The temperature in the AC cold-air stream has been above the limit
+            for over 10 minutes — a strong indication that the air conditioning
+            has failed. Check the cooling at the server location.
+          # Optional: deep-link to the dashboard. Alertmanager/email templates
+          # can render this into a clickable button. Point it at your Grafana.
+          dashboard_url: "https://grafana.example.com/d/climate/"
+
+      # Sensor liveness — the part most homelab setups get wrong.
+      # fetch_success flips to 0 on a read error WHILE the reader still runs. But
+      # if the reader/timer stops entirely, node_exporter keeps serving the last
+      # .prom file unchanged forever, so fetch_success freezes at 1 — a plain
+      # "== 0" check would be blind to a dead reader. The staleness clause
+      # (now - last_check_timestamp > 600s) catches exactly that case.
+      # Note: if the .prom was never written once (reader never started), BOTH
+      # sides return an empty vector and this does not fire — it detects a
+      # stopped reader, not one that never ran. The short "for" keeps the total
+      # stop-detection latency near the 10 min the staleness clause implies
+      # (~10 min stale + 2 min hold), rather than adding a long extra delay.
+      - alert: IntakeSensorDown
+        expr: >-
+          climate_intake_fetch_success == 0
+          or (time() - climate_intake_last_check_timestamp_seconds > 600)
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cold-air sensor not reporting"
+          description: >-
+            The AC cold-air probe has failed to read, or has not updated for
+            over 10 minutes (reader/timer stopped). The IntakeTempHigh alert is
+            blind while this is firing — restore the sensor first.
+
+      # Outdoor reference is cosmetic: a long outage means the context line is
+      # missing, not that anything is at risk. Low severity, long "for".
+      - alert: OutdoorFetchStale
+        expr: >-
+          climate_outdoor_fetch_success == 0
+          or (time() - climate_outdoor_last_check_timestamp_seconds > 3600)
+        for: 6h
+        labels:
+          severity: info
+        annotations:
+          summary: "Outdoor temperature reference stale"
+          description: >-
+            The Open-Meteo reference value has not updated for a long time.
+            No operational risk — the API or the network is likely unavailable.

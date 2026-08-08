@@ -1,4 +1,4 @@
-# grafana-climate-monitoring
+# Grafana Climate Monitoring
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Lint](https://github.com/fidpa/grafana-climate-monitoring/actions/workflows/lint.yml/badge.svg)

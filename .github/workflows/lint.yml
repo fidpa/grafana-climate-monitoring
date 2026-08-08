@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Allow a manual run from the Actions tab. Without this, the workflow can only
+  # be started by a push or a PR — so a branch that is already green has no way
+  # to be re-validated (e.g. after a base-image update) without an empty commit.
+  workflow_dispatch:
 
 jobs:
   shellcheck:
@@ -47,8 +51,13 @@ jobs:
         run: |
           # prom/prometheus' entrypoint is /bin/prometheus, so promtool must be
           # selected explicitly — otherwise it is parsed as a prometheus arg.
+          #
+          # The image tag is pinned on purpose. With :latest, a new upstream
+          # release can turn this job red on an unchanged repository, which
+          # makes the gate report on Prometheus rather than on the commit.
+          # Bump deliberately, and treat any new finding as a real one.
           docker run --rm -v "$PWD/prometheus/alerts:/rules:ro" \
-            --entrypoint /bin/promtool prom/prometheus:latest \
+            --entrypoint /bin/promtool prom/prometheus:v3.13.2 \
             check rules /rules/climate-alerts.yml
 
   alertmanager:
@@ -60,10 +69,13 @@ jobs:
         run: |
           # Repoint the template path at the mounted dir so amtool loads and
           # parses the .tmpl too (catches Go-template errors, not just YAML).
+          # If the output below does not list "1 templates", the sed path did
+          # not match and the template was silently NOT validated.
           sed 's#/etc/alertmanager/templates#/work/templates#' \
             alertmanager/alertmanager.example.yml > am-ci.yml
+          # Pinned for the same reason as the promtool image above.
           docker run --rm \
             -v "$PWD/am-ci.yml:/work/am.yml:ro" \
             -v "$PWD/alertmanager/templates:/work/templates:ro" \
-            --entrypoint /bin/amtool prom/alertmanager:latest \
+            --entrypoint /bin/amtool prom/alertmanager:v0.33.1 \
             check-config /work/am.yml

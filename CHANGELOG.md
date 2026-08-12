@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] — 2026-08-12
+
+### Fixed
+
+- **Both reader scripts are now executable in the repository itself**
+  (`chmod 0755` on `scripts/fetch-outdoor-temp.sh` and
+  `scripts/read-usb-temp-sensor.sh`). `docs/INSTALL.md` already sets the mode
+  explicitly via `install -m 0755`, so a systemd-based install was never
+  affected — but running either script directly from a checkout (`./scripts/
+  read-usb-temp-sensor.sh`) failed with "Permission denied" until now.
+
 ## [0.1.1] — 2026-08-08
 
 Housekeeping only. Every file this project deploys — the reader scripts, the
@@ -55,5 +66,6 @@ on a running installation.
   template (`alertmanager/templates/climate-email.tmpl`) rendering current
   value vs. threshold, what-to-do text, and a dashboard button.
 
+[0.1.2]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.2
 [0.1.1]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.1
 [0.1.0]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.0

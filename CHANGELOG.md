@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] - 2026-08-28: GitHub identifies the project as MIT-licensed
+
+### Changed
+
+- **The repository page shows the MIT licence, and licence-filtered searches
+  find the project.** `LICENSE` carried the repository URL on its own line
+  under the copyright notice. GitHub reads a licence text with an extra line as
+  modified and reports `NOASSERTION`, which leaves the licence field on the
+  repository page empty. The line is gone; the MIT text and the copyright
+  notice are byte-for-byte unchanged, and the URL is still in `README.md`.
+
 ## [0.1.2] — 2026-08-12
 
 ### Fixed
@@ -66,6 +77,7 @@ on a running installation.
   template (`alertmanager/templates/climate-email.tmpl`) rendering current
   value vs. threshold, what-to-do text, and a dashboard button.
 
+[0.1.3]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.3
 [0.1.2]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.2
 [0.1.1]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.1
 [0.1.0]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.0

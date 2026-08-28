@@ -4,6 +4,47 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-08-28: Release pages carry the changelog section they belong to
+
+The release pages and this file had grown apart. Every published body was an
+edited retelling of its changelog section, with its own `### Highlights`
+structure, so a correction to one of them did not reach the other. This
+release makes the changelog the single source for both, and moves the release
+title into the section heading so the CI can read it from there.
+
+The older sections were checked against the tags they describe. Every measured
+value, path and identifier in them is unchanged; what changed is the wording and
+the typography.
+
+### Added
+
+- **A tag push now creates the release.** `.github/workflows/release.yml` cuts
+  the section for the pushed tag out of `CHANGELOG.md`, takes the headline from
+  the heading and hands both to `softprops/action-gh-release` as `name` and
+  `body_path`. Until now the title and the body were typed by hand at
+  `gh release create`, which is why no two of them followed the same form.
+
+### Changed
+
+- **Every release page carries the verbatim changelog section of its version.**
+  The bodies of `v0.1.0` through `v0.1.3` were replaced with the sections below,
+  so a correction to this file reaches the release page with the next edit
+  instead of living in two versions.
+- **Release titles name what a version changes.** The headline lives in the
+  section heading (`## [X.Y.Z] - YYYY-MM-DD: <headline>`) and is the only source
+  the workflow reads, so title and body cannot disagree.
+- **The `v0.1.2` release page no longer claims the reader scripts are executable
+  "again".** `scripts/read-usb-temp-sensor.sh` and `scripts/fetch-outdoor-temp.sh`
+  were tracked as mode `0644` from the initial commit until `v0.1.2`, so there was
+  no earlier state to return to. That release made them executable for the first
+  time, and its title now says so.
+- **The initial-release entries lead with what the setup gives an operator**
+  rather than with the file that provides it. The files, metric names and alert
+  names they cite are the same ones.
+- **This file is plain ASCII.** The em dash stood for a colon, a parenthesis and
+  a causal clause in turn; each occurrence is now the punctuation or the word it
+  replaced.
+
 ## [0.1.3] - 2026-08-28: GitHub identifies the project as MIT-licensed
 
 ### Changed
@@ -15,7 +56,7 @@ All notable changes to this project are documented here. The format follows
   repository page empty. The line is gone; the MIT text and the copyright
   notice are byte-for-byte unchanged, and the URL is still in `README.md`.
 
-## [0.1.2] — 2026-08-12
+## [0.1.2] - 2026-08-12: Reader scripts run straight from a checkout
 
 ### Fixed
 
@@ -23,14 +64,15 @@ All notable changes to this project are documented here. The format follows
   (`chmod 0755` on `scripts/fetch-outdoor-temp.sh` and
   `scripts/read-usb-temp-sensor.sh`). `docs/INSTALL.md` already sets the mode
   explicitly via `install -m 0755`, so a systemd-based install was never
-  affected — but running either script directly from a checkout (`./scripts/
-  read-usb-temp-sensor.sh`) failed with "Permission denied" until now.
+  affected; running either script directly from a checkout
+  (`./scripts/read-usb-temp-sensor.sh`) failed with "Permission denied" until
+  now.
 
-## [0.1.1] — 2026-08-08
+## [0.1.1] - 2026-08-08: Lint pipeline in service and validator images pinned
 
-Housekeeping only. Every file this project deploys — the reader scripts, the
+Housekeeping only. Every file this project deploys (the reader scripts, the
 systemd units, the alert rules, the dashboard JSON, the Grafana provisioning and
-the Alertmanager example — is byte-identical to v0.1.0. Upgrading changes nothing
+the Alertmanager example) is byte-identical to v0.1.0. Upgrading changes nothing
 on a running installation.
 
 ### Changed
@@ -40,7 +82,7 @@ on a running installation.
 - **The CI validator images are pinned** to `prom/prometheus:v3.13.2` and
   `prom/alertmanager:v0.33.1` instead of tracking `:latest`. Both gates run
   upstream containers, so a new Prometheus or Alertmanager release could turn
-  them red on an unchanged repository — the gate would then be reporting on
+  them red on an unchanged repository, and the gate would then be reporting on
   upstream rather than on the commit. Bumping the pins is now a deliberate step,
   and a finding that appears after a bump is a real one. Verified before pinning:
   `promtool check rules` reports the same 4 rules, and `amtool check-config`
@@ -53,30 +95,56 @@ on a running installation.
 
 - **The lint workflow now actually runs.** From the repository's creation until
   2026-08-08 GitHub had never registered it: the Actions API reported zero
-  workflows and zero runs, and the Lint badge in the README returned HTTP 404 —
+  workflows and zero runs, and the Lint badge in the README returned HTTP 404,
   despite Actions being enabled and `.github/workflows/lint.yml` sitting on
   `main` since the initial commit. Pushing a commit that touches the workflow
   file registered it; all five jobs (ShellCheck, YAML, Dashboard JSON, PromQL
   rules, Alertmanager config) pass, and the badge now reads `passing`. The five
   checks were previously only ever run locally.
 
-## [0.1.0] — 2026-07-12
+## [0.1.0] - 2026-07-12: Server-room climate monitoring
 
 ### Added
-- USB serial temperature sensor reader (`read-usb-temp-sensor.sh`) with atomic
-  `.prom` writes, truncated-frame handling, and liveness gauges.
-- Open-Meteo outdoor temperature reader (`fetch-outdoor-temp.sh`).
-- Grafana dashboard (`climate.json`): room air, cooling-intake, outdoor
-  reference, and a 7-day forecast table via the Infinity datasource.
-- Prometheus alert rules: `RoomTempHigh`, `IntakeTempHigh`, `IntakeSensorDown`
-  (fetch-failure **or** staleness), `OutdoorFetchStale`.
-- systemd service + timer units for both readers.
-- Grafana provisioning for Prometheus (pinned uid) and Infinity datasources.
-- Optional Alertmanager e-mail alerting: example config
-  (`alertmanager/alertmanager.example.yml`) and a layperson-friendly HTML/text
-  template (`alertmanager/templates/climate-email.tmpl`) rendering current
-  value vs. threshold, what-to-do text, and a dashboard button.
 
+- **A warming AC cold-air stream becomes a Prometheus gauge.**
+  `scripts/read-usb-temp-sensor.sh` reads a self-streaming USB serial
+  thermometer and publishes `climate_intake_temp_celsius` into the node_exporter
+  textfile collector. The `.prom` file is built in a temp file and renamed into
+  place, so node_exporter never sees a half-written one; the first and the last
+  line of each sampling burst are discarded because both can be cut mid-frame.
+- **A dead reader is distinguishable from a low reading.** Both readers write two
+  liveness gauges next to the value, `*_fetch_success` and
+  `*_last_check_timestamp_seconds`, which is what lets an alert tell "the read
+  failed" and "the reader stopped" apart.
+- **Outdoor temperature arrives as context, without an API key.**
+  `scripts/fetch-outdoor-temp.sh` fetches the current value from Open-Meteo and
+  publishes `climate_outdoor_temp_celsius`.
+- **One dashboard holds room air, cooling intake and outdoor reference.**
+  `grafana/dashboards/climate.json` carries the panels for all three sources plus
+  a daily-maximum forecast table fed by the Infinity datasource
+  (`forecast_days=8`, which yields seven or eight real rows depending on the
+  model run; see `docs/OPEN_METEO_GRAFANA.md`).
+- **Four alert rules cover the fast signal, the broad signal and a stopped
+  reader.** `prometheus/alerts/climate-alerts.yml` ships `RoomTempHigh`,
+  `IntakeTempHigh`, `IntakeSensorDown` (fetch failure **or** staleness) and
+  `OutdoorFetchStale`.
+- **Both readers are driven by systemd timers.**
+  `systemd/climate-usb-sensor.timer` fires every 60 seconds and
+  `systemd/climate-outdoor-temp.timer` every 15 minutes; only the outdoor unit
+  orders on `network-online.target`, because the sensor read is local serial I/O.
+- **A provisioned dashboard finds its datasource without manual editing.**
+  `grafana/provisioning/datasources/prometheus.yaml` pins `uid: prometheus`,
+  which is the uid the dashboard JSON references; `infinity.yaml` provisions the
+  forecast datasource the same way.
+- **Alertmanager can turn a firing alert into a mail a non-engineer
+  understands.** `alertmanager/alertmanager.example.yml` carries route and
+  receiver with SMTP placeholders, and
+  `alertmanager/templates/climate-email.tmpl` renders an HTML and a text body: the
+  `value` and `threshold` annotations where a rule sets them, the `description` as
+  a what-to-do line, and a dashboard button where a rule sets `dashboard_url`.
+  Both files are optional; the alert rules fire without them.
+
+[0.1.4]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.4
 [0.1.3]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.3
 [0.1.2]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.2
 [0.1.1]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.1

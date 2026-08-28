@@ -1,0 +1,65 @@
+name: Release
+
+# A tag push publishes the release. Title and body both come from CHANGELOG.md,
+# so there is exactly one source for what a version says about itself: the
+# headline out of the section heading, the section itself as the body.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          HEADING="## [${VERSION}]"
+
+          # index($0, head) == 1 anchors on the line start. A substring search
+          # would match a heading whose headline merely mentions another version
+          # number and would then cut the wrong section.
+          #
+          # Two stop rules, not one: the oldest section is followed by the
+          # "[0.1.0]: https://..." link definitions, not by another heading, so
+          # without the second rule they end up in that release body.
+          awk -v head="$HEADING" '
+            index($0, head) == 1 { p=1; next }
+            /^## / { if (p) exit }
+            /^\[[0-9]/ { if (p) exit }
+            p { print }
+          ' CHANGELOG.md | sed -e '/./,$!d' > release-notes.md
+          test -s release-notes.md || { echo "Empty release notes for $VERSION"; exit 1; }
+
+          HEADLINE=$(awk -v head="$HEADING" '
+            index($0, head) == 1 {
+              if (match($0, /- [0-9]{4}-[0-9]{2}-[0-9]{2}: /)) {
+                print substr($0, RSTART + RLENGTH); exit
+              }
+            }
+          ' CHANGELOG.md)
+          if [ -n "$HEADLINE" ]; then
+            echo "title=v${VERSION}: ${HEADLINE}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No headline in the [${VERSION}] heading, falling back to the tag name"
+            echo "title=v${VERSION}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.changelog.outputs.title }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') }}

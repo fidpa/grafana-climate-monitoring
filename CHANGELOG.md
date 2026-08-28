@@ -4,6 +4,44 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.5] - 2026-08-28: The licence entry points at the file that carries the project address
+
+### Fixed
+
+- **The `[0.1.4]` note on the removed licence line named the wrong file.** The
+  line taken out of `LICENSE` was the bare project address, and `README.md`
+  carries that address only as the prefix of the Lint badge image, which is a
+  path to an SVG and not a link a reader can follow. The address is in
+  `scripts/fetch-outdoor-temp.sh`, `scripts/read-usb-temp-sensor.sh` and the
+  four unit files under `systemd/`, where `Documentation=` points at it.
+
+## [0.1.5] - 2026-08-28: Documentation matches what the scripts and rules actually do
+
+### Fixed
+
+- **The three settings that are not environment variables are now named as
+  such.** `README.md` said both readers are configured entirely through
+  environment variables. `TEMP_MIN` (-40) and `TEMP_MAX` (100) in
+  `scripts/read-usb-temp-sensor.sh` and `TIMEOUT` (10) in
+  `scripts/fetch-outdoor-temp.sh` are `readonly` without an environment fallback,
+  so a probe operating outside that range, or a slow link, needs an edit in the
+  script. The README and both script headers say where.
+- **The lead time in the README is no longer a number nobody measured.** The hero
+  and the introduction promised "minutes before a room thermometer would" and
+  "minutes of head start". What the project can show is the physical one:
+  `docs/HARDWARE.md` documents that the cold-air stream warms within seconds,
+  which is the sensor reaction, not a measured lead over the room average. Both
+  sentences now say what they can show, that the intake reading moves while the
+  room average is still where it was.
+- **The e-mail template no longer claims all four rules carry the same
+  annotations.** Its header said the `value`, `threshold` and `dashboard_url`
+  annotations are "exactly the annotations used by
+  `prometheus/alerts/climate-alerts.yml`". Two of the four rules set `value` and
+  `threshold` (`RoomTempHigh`, `IntakeTempHigh`) and one sets `dashboard_url`
+  (`IntakeTempHigh`); `IntakeSensorDown` and `OutdoorFetchStale` carry summary and
+  description only. The rendering was always conditional and is unchanged; only
+  the comment was wrong.
+
 ## [0.1.4] - 2026-08-28: Release pages carry the changelog section they belong to
 
 The release pages and this file had grown apart. Every published body was an
@@ -144,6 +182,8 @@ on a running installation.
   a what-to-do line, and a dashboard button where a rule sets `dashboard_url`.
   Both files are optional; the alert rules fire without them.
 
+[0.1.5]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.5
+[0.1.5]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.5
 [0.1.4]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.4
 [0.1.3]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.3
 [0.1.2]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.2

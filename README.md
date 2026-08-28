@@ -7,9 +7,10 @@
 ![Prometheus](https://img.shields.io/badge/Prometheus-node__exporter-E6522C?logo=prometheus&logoColor=white)
 
 **Know before the room cooks.** A small, self-hosted setup that watches a server
-room — or a network cabinet, a homelab shelf, a garage rack — for a cooling
-failure and catches it early — minutes before a room thermometer would — using a
-Grafana dashboard, Prometheus alerts, and a USB temperature probe.
+room, a network cabinet, a homelab shelf or a garage rack for a cooling failure
+and catches it while the room average is still unchanged, using a Grafana
+dashboard, Prometheus alerts, and a USB temperature probe in the AC cold-air
+stream.
 
 ![Server Room Climate dashboard](docs/img/dashboard.png)
 
@@ -18,7 +19,8 @@ Grafana dashboard, Prometheus alerts, and a USB temperature probe.
 Room-average temperature is a *lagging* signal: by the time the whole room is
 warm, the air conditioner has been dead for a while. The trick is to put a USB
 probe **directly in the cold-air stream** of the AC unit. When cooling
-fails, that stream warms almost immediately — you get minutes of head start.
+fails, that stream warms almost immediately, while the room average is still
+where it was.
 
 This project combines three temperature sources into one picture:
 
@@ -135,8 +137,8 @@ threshold, and a one-click dashboard button. See
 
 ## Configuration
 
-Both scripts are configured entirely through environment variables (set them in
-the systemd unit's `Environment=` lines):
+Both scripts read their settings from environment variables (set them in the
+systemd unit's `Environment=` lines):
 
 | Variable | Default | Used by |
 |---|---|---|
@@ -147,7 +149,14 @@ the systemd unit's `Environment=` lines):
 | `OPEN_METEO_MODEL` | `dwd-icon` | outdoor reader |
 | `TEXTFILE_DIR` | `/var/lib/node_exporter/textfile_collector` | both |
 
-Two couplings are **not** driven by these variables and need a manual edit:
+Three values are fixed in the scripts themselves: the sanity bounds `TEMP_MIN`
+(-40) and `TEMP_MAX` (100) in `scripts/read-usb-temp-sensor.sh`, which reject
+electrical glitches, and the curl `TIMEOUT` (10 s) in
+`scripts/fetch-outdoor-temp.sh`. A probe operating outside that range, or a slow
+link, needs an edit in the script.
+
+Two further couplings are **not** driven by these variables either and need a
+manual edit:
 
 - **`METRIC_PREFIX`** (default `climate_intake` / `climate_outdoor`) is settable,
   but the metric names are also hardcoded in `prometheus/alerts/climate-alerts.yml`

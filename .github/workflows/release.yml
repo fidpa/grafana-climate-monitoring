@@ -34,8 +34,12 @@ jobs:
           # Two stop rules, not one: the oldest section is followed by the
           # "[0.1.0]: https://..." link definitions, not by another heading, so
           # without the second rule they end up in that release body.
+          #
+          # !p guards the anchor: without it a second heading carrying the same
+          # version re-arms p instead of ending the section, and both sections
+          # land in one release body.
           awk -v head="$HEADING" '
-            index($0, head) == 1 { p=1; next }
+            !p && index($0, head) == 1 { p=1; next }
             /^## / { if (p) exit }
             /^\[[0-9]/ { if (p) exit }
             p { print }

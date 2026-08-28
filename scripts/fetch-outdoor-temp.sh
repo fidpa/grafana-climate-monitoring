@@ -22,6 +22,9 @@
 #                         Use 'forecast' for the global best-match model.
 #   TEXTFILE_DIR          node_exporter textfile collector dir.
 #   METRIC_PREFIX         Metric name prefix. Default climate_outdoor.
+#
+# Not settable from the environment: TIMEOUT (10 s) below, the curl time limit
+# for the whole request. A slow link needs an edit here.
 
 set -uo pipefail
 

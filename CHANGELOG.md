@@ -4,18 +4,12 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.1.5] - 2026-08-28: The licence entry points at the file that carries the project address
+## [0.1.6] - 2026-08-28: Three documentation fixes reach the tree they were announced in
 
-### Fixed
-
-- **The `[0.1.4]` note on the removed licence line named the wrong file.** The
-  line taken out of `LICENSE` was the bare project address, and `README.md`
-  carries that address only as the prefix of the Lint badge image, which is a
-  path to an SVG and not a link a reader can follow. The address is in
-  `scripts/fetch-outdoor-temp.sh`, `scripts/read-usb-temp-sensor.sh` and the
-  four unit files under `systemd/`, where `Documentation=` points at it.
-
-## [0.1.5] - 2026-08-28: Documentation matches what the scripts and rules actually do
+The `[0.1.5]` section listed these three fixes under a second heading of its own, but the
+`v0.1.5` tag carries only the changelog text: the files themselves are changed here. If you
+read them on the `v0.1.5` page and did not find them in that tree, this is the release that
+ships them.
 
 ### Fixed
 
@@ -33,6 +27,12 @@ All notable changes to this project are documented here. The format follows
   which is the sensor reaction, not a measured lead over the room average. Both
   sentences now say what they can show, that the intake reading moves while the
   room average is still where it was.
+- **Two sections carrying the same version number no longer end up in one
+  release body.** The `awk` in `.github/workflows/release.yml` re-armed its flag
+  on every line matching the heading, so a second `## [X.Y.Z]` heading restarted
+  the section instead of ending it: the `v0.1.5` page carries both of its
+  same-numbered sections for that reason. The anchor is now guarded with `!p`,
+  which lets the `/^## /` stop rule end the section at the duplicate.
 - **The e-mail template no longer claims all four rules carry the same
   annotations.** Its header said the `value`, `threshold` and `dashboard_url`
   annotations are "exactly the annotations used by
@@ -41,6 +41,17 @@ All notable changes to this project are documented here. The format follows
   (`IntakeTempHigh`); `IntakeSensorDown` and `OutdoorFetchStale` carry summary and
   description only. The rendering was always conditional and is unchanged; only
   the comment was wrong.
+
+## [0.1.5] - 2026-08-28: The licence entry points at the file that carries the project address
+
+### Fixed
+
+- **The `[0.1.4]` note on the removed licence line named the wrong file.** The
+  line taken out of `LICENSE` was the bare project address, and `README.md`
+  carries that address only as the prefix of the Lint badge image, which is a
+  path to an SVG and not a link a reader can follow. The address is in
+  `scripts/fetch-outdoor-temp.sh`, `scripts/read-usb-temp-sensor.sh` and the
+  four unit files under `systemd/`, where `Documentation=` points at it.
 
 ## [0.1.4] - 2026-08-28: Release pages carry the changelog section they belong to
 
@@ -182,7 +193,7 @@ on a running installation.
   a what-to-do line, and a dashboard button where a rule sets `dashboard_url`.
   Both files are optional; the alert rules fire without them.
 
-[0.1.5]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.5
+[0.1.6]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.6
 [0.1.5]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.5
 [0.1.4]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.4
 [0.1.3]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.3

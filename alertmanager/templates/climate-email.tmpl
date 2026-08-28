@@ -9,7 +9,9 @@
   box appears only when the alert rule sets the `value` (and optional
   `threshold`) annotation — otherwise summary/description carry the message.
   The dashboard button appears only when the rule sets `dashboard_url`.
-  These are exactly the annotations used by prometheus/alerts/climate-alerts.yml.
+  In prometheus/alerts/climate-alerts.yml two of the four rules set `value` and
+  `threshold` (RoomTempHigh, IntakeTempHigh) and one sets `dashboard_url`
+  (IntakeTempHigh); the other two carry summary and description only.
 
   Timestamps use .Local — set TZ on the Alertmanager process (e.g.
   Environment=TZ=Europe/Berlin) if its host runs on UTC.

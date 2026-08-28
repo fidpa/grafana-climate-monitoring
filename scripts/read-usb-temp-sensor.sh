@@ -35,6 +35,10 @@
 #   METRIC_PREFIX     Metric name prefix. Default climate_intake. NOTE: changing
 #                     it also requires matching edits in the alert rules and the
 #                     Grafana dashboard, which hardcode the metric names.
+#
+# Not settable from the environment: TEMP_MIN (-40) and TEMP_MAX (100) below.
+# They bound a plausible reading and reject electrical glitches; a probe that
+# operates outside that range needs an edit here.
 
 set -uo pipefail
 

@@ -4,6 +4,58 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.7] - 2026-08-29: The README stops describing alerts the rules do not implement
+
+### Fixed
+
+- **Two alert rows in the README described behaviour the rule file does not
+  have.** `OutdoorFetchStale` was listed as firing on a reference older than
+  1 h, but its `for:` is `6h`, so an operator reading only the README would
+  have waited five hours for a mail that was never due yet. `IntakeSensorDown`
+  hid its `for: 2m` entirely. The alert table now carries a `Held for` column
+  next to the shipped thresholds, and a paragraph explains why the hold times
+  differ: `IntakeSensorDown` waits only two minutes because its staleness
+  clause already carries ten, and stretching it would delay the detection of a
+  stopped reader twice over.
+- **The metrics table omitted the two gauges `OutdoorFetchStale` runs on.**
+  `climate_outdoor_fetch_success` and
+  `climate_outdoor_last_check_timestamp_seconds` are written by
+  `scripts/fetch-outdoor-temp.sh` on every run and are both sides of that
+  rule's expression, but only the intake pair was documented. Anyone building
+  their own outdoor rule had no name to reach for.
+- **`SENSOR_DEV` and `METRIC_PREFIX` were missing from the configuration
+  table.** Both are read from the environment by the readers and documented in
+  the script headers, so the README was the only place that did not know them.
+  `SENSOR_DEV` is the escape hatch when the by-id glob matches more than one
+  adapter.
+
+### Changed
+
+- **The README now states what this project is not.** Five limits, next to the
+  features rather than in a footnote: it observes and never actuates, it has no
+  redundant probe, its thresholds are placeholders from one rack, it needs GNU
+  coreutils because `read-usb-temp-sensor.sh` uses `head -n -1`, and its reader
+  assumes a probe that streams float lines by itself at 9600 baud. The same
+  section names the `IntakeSensorDown` blind spot that the rule file has
+  carried in a comment since 0.1.0: the rule detects a reader that stopped, not
+  one that never started, because an unwritten `.prom` leaves both sides of the
+  expression an empty vector.
+- **The room hwmon selector joined the list of settings that live in two
+  files.** It starts as the placeholder `chip="YOUR_CHIP",sensor="YOUR_SENSOR"`
+  in both the `room_sensor` dashboard variable and the `RoomTempHigh` matcher,
+  a coupling that previously only `docs/HARDWARE.md` mentioned.
+- **The Grafana 10 requirement names the API it needs.** The forecast table
+  uses `custom.cellOptions`, introduced in Grafana 10.0; the badge alone did
+  not say why the floor is where it is. `awk` and the GNU coreutils dependency
+  joined the same list.
+- **New "Third-party parts" section.** Open-Meteo is queried live and not
+  redistributed here, the Infinity datasource is a third-party plugin the
+  operator installs, and the screenshot carries no hostname or location because
+  the dashboard reads both from variables.
+- **README typography follows the same rule as the changelog.** Seven em dashes
+  and the ditto marks in the metrics table are gone; the remaining non-ASCII is
+  the ASCII-art diagram and the degree sign.
+
 ## [0.1.6] - 2026-08-28: Three documentation fixes reach the tree they were announced in
 
 The `[0.1.5]` section listed these three fixes under a second heading of its own, but the
@@ -193,6 +245,7 @@ on a running installation.
   a what-to-do line, and a dashboard button where a rule sets `dashboard_url`.
   Both files are optional; the alert rules fire without them.
 
+[0.1.7]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.7
 [0.1.6]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.6
 [0.1.5]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.5
 [0.1.4]: https://github.com/fidpa/grafana-climate-monitoring/releases/tag/v0.1.4
